@@ -21,8 +21,10 @@ def fetchDaysOA(year, day_of_year):
   response = urllib.request.urlopen(url)
   data=response.read()
   text = data.decode('utf-8')
-  #print (text) #to test
-  if text=="ERROR: No such file":
+  print (text,"\n") #to test
+  #print (data,"\n")
+  print (len(text),"\n")
+  if text=="ERROR: No such file" or text=='' or len(text)<100:
      return "nodata"
 
   # Function that finds every instance of a substring in a string, 
@@ -56,7 +58,7 @@ def fetchDaysOA(year, day_of_year):
   # Parse the "," seperated values, and convert to integers
   prn_list = [int(e) if e.isdigit() else e for e in str_prn_list.split(',')]
   prn_list = list(filter(None, prn_list)) #filter any missing points
-  #print (prn_list)
+  print (prn_list,"\n")
   
   #Forms the list of clocks
   str_clk_list=""
@@ -74,7 +76,7 @@ def fetchDaysOA(year, day_of_year):
   tmp_clk_list = [e for e in str_clk_list.split(',')]
   tmp_clk_list = list(filter(None, tmp_clk_list)) #filter any missing points
   clk_list = list(s[:2] for s in tmp_clk_list) #kills any trailing junk
-  #print ("\n",clk_list,"\n")
+  print ("\n",clk_list,"\n")
   
   #Safety check. Program will fail if the format of one of the OA files
   # is significantly different. The program will output an error messaage, but
@@ -87,6 +89,17 @@ def fetchDaysOA(year, day_of_year):
   # make sure following loop cannot extend past limit of list
   while len(prn_list) < 32:
     prn_list.append(0)
+  
+  ## Check if there are any duplicate PRNs! If so, deletes the second one.
+  # I assume that there is never data for these days? If there is, only 1 day..?
+  # nb: sometimes duplicates of 'zero' at end, see above!
+  for i in range (len(prn_list)): 
+     #note: len(prn_list) changes when items deleted!!
+    if i==0 or i==len(prn_list):
+      continue
+    if prn_list[i]==prn_list[i-1] and prn_list[i] != 0:
+      del prn_list[i]
+      del clk_list[i]
   
   #Loops through each possible PRN (1-32), forms the final output list
   full_lst=[year, month, day, day_of_year]
@@ -184,7 +197,7 @@ def formSwapsByDay():
 ################################################################################
 
 
-#print(fetchDaysOA(2012,193))
+#print(fetchDaysOA(2006,254))
 
 formSwapsByDay()
 
