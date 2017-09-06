@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 #Uses python3
-import urllib.request
-import datetime
 
 ################################################################################
 def fetchDaysOA(year, day_of_year):
@@ -10,7 +8,9 @@ def fetchDaysOA(year, day_of_year):
 # [year, month, day, day_of_year, clock1, clock2, ..., clock32].
 # Note: there is 1 'clock' entry for each PRN (1-32); eith Rb, Cs, or no.
 # 'no' means that PRN was not in use that day.
-  
+  import urllib.request
+  import datetime
+
   #work out the actual date from the year+day
   the_date=datetime.date(year, 1, 1) + datetime.timedelta(day_of_year-1)
   month=the_date.month
@@ -21,7 +21,7 @@ def fetchDaysOA(year, day_of_year):
   response = urllib.request.urlopen(url)
   data=response.read()
   text = data.decode('utf-8')
-  #print (text)
+  #print (text) #to test
   if text=="ERROR: No such file":
      return "nodata"
 
@@ -43,7 +43,7 @@ def fetchDaysOA(year, day_of_year):
   prn_index_list=findall(text,"PRNS")
   clk_index_list=findall(text,"CLOCK ")
 
-  # Form the (string) list of PRNs
+  # Form the list of PRNs
   str_prn_list=""
   for i in prn_index_list:
     end=text.find("\n",i)
@@ -58,6 +58,7 @@ def fetchDaysOA(year, day_of_year):
   prn_list = list(filter(None, prn_list)) #filter any missing points
   #print (prn_list)
   
+  #Forms the list of clocks
   str_clk_list=""
   for i in clk_index_list:
     beg=text.find(":",i)
@@ -100,14 +101,28 @@ def fetchDaysOA(year, day_of_year):
 ################################################################################
 
 
-def test():
+################################################################################
+def formSwapsByDay():
+#Function that forms the "allClockSwapsByDay" file. This file contains one
+# line for each each that a clock was swapped (between Cs, Rb, or no).
+# The format of each line of the file is:
+#   year month day day_of_year Clock1 clock2 ..... clock32
+# There is one clock assignment for each PRN (1-32); can be 'no' if no clock
+# It forms this file by downloading the operational advisories (OA) files from the web
+# Note: it saves each new 'swap' in this file, to avoid having to download all
+# the OAs each time. It checks the existing file first, and starts where it left off.
+# Program will continue to run untill it cannot find/open 10 OA files in a row
+# After that, program assumes this is because we got to the end of the files,
+# so it finishes.
   import os
 
-  filename="hello.txt"
-
+  filename="allClockSwapsByDay.txt"
+  
+  # Check if file already exists. If so, reads in the last date that we have 
+  # info for. If not, start at January 2000 [first 30s clk file is may 2000].
   if os.path.exists(filename):
     ifile = open(filename, "r")
-    line="2000 1 1 1 0"
+    line="2000 1 1 1 0" #In case file exists, but is empty
     for line in ifile:
         pass
     last = line
@@ -119,19 +134,22 @@ def test():
     year=2000
     day=1
     prev_clk_list=[]
-
-  print(year, day)
-
+  #END if
+  #print(year, day)
+  
+  #Open the file for "append" output
   skipped_days=0
   ofile = open(filename, "a")
-
+  
+  #Keep going until we have not found 10 OA files in a row
   while skipped_days<10:
     day += 1
     if day>366:
       day=1
       year+=1
     print(year, day)
-
+    
+    # Fetch and parse the OA file (func defined above)
     day_OA_line=fetchDaysOA(year,day)
     
     # count the number of "missed days" in a row
@@ -142,22 +160,24 @@ def test():
       skipped_days = 0
 
     print("-->",year,"-",day_OA_line[1],"-",day_OA_line[2], sep='')
-
+    
+    # Checks if there has been a change in any of the clock assignments since
+    # last line (yesterday). If so, write to file.
     current_clk_list=day_OA_line[4:]
-
     if prev_clk_list != current_clk_list:
       for i in day_OA_line:
         ofile.write(str(i)+" ")
       ofile.write("\n")
       prev_clk_list=current_clk_list
-
+  #END while
+    
   ofile.close()
+################################################################################
 
 
+print(fetchDaysOA(2000,3))
 
-#print(fetchDaysOA(2000,3))
-
-test()
+#formSwapsByDay()
 
 
 
