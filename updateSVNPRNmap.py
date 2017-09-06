@@ -71,9 +71,10 @@ def fetchDaysOA(year, day_of_year):
     temp=temp.replace("CS", "Cs")
     str_clk_list=str_clk_list+temp+","
   # Parse the "," seperated values:
-  clk_list = [e for e in str_clk_list.split(',')]
-  clk_list = list(filter(None, clk_list)) #filter any missing points
-  #print (clk_list)
+  tmp_clk_list = [e for e in str_clk_list.split(',')]
+  tmp_clk_list = list(filter(None, tmp_clk_list)) #filter any missing points
+  clk_list = list(s[:2] for s in tmp_clk_list) #kills any trailing junk
+  #print ("\n",clk_list,"\n")
   
   #Safety check. Program will fail if the format of one of the OA files
   # is significantly different. The program will output an error messaage, but
@@ -100,6 +101,14 @@ def fetchDaysOA(year, day_of_year):
   return full_lst
 ################################################################################
 
+## NOTE:
+#-A few of the days don't have a new line after tha line of clocks,
+#e.g., 2011,234 [22 Aug]:
+#   BLOCK II: PRNS 29, 30, 31, 32
+#   PLANE   : SLOT C1, B5, A2, E5
+#   CLOCK   :      RB, RB, RB, RB 2. CURRENT ADVISORIES AND FORECASTS :
+
+
 
 ################################################################################
 def formSwapsByDay():
@@ -111,7 +120,7 @@ def formSwapsByDay():
 # It forms this file by downloading the operational advisories (OA) files from the web
 # Note: it saves each new 'swap' in this file, to avoid having to download all
 # the OAs each time. It checks the existing file first, and starts where it left off.
-# Program will continue to run untill it cannot find/open 10 OA files in a row
+# Program will continue to run untill it cannot find/open 25 OA files in a row
 # After that, program assumes this is because we got to the end of the files,
 # so it finishes.
   import os
@@ -142,7 +151,7 @@ def formSwapsByDay():
   ofile = open(filename, "a")
   
   #Keep going until we have not found 10 OA files in a row
-  while skipped_days<10:
+  while skipped_days<25:
     day += 1
     if day>366:
       day=1
@@ -175,9 +184,9 @@ def formSwapsByDay():
 ################################################################################
 
 
-print(fetchDaysOA(2000,3))
+#print(fetchDaysOA(2012,193))
 
-#formSwapsByDay()
+formSwapsByDay()
 
 
 
