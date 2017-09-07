@@ -197,9 +197,69 @@ def formSwapsByDay():
 ################################################################################
 
 
+
+################################################################################
+import urllib.request
+import os
+import gzip
+import io
+
+try:
+  urllib.request.urlretrieve('ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz', 'PRN_GPS.gz')
+except Exception:
+  print('X!  Error: Couldnt donwload PRN_GPS file - check internet connection?')
+  print("X!  Will continue, using existing file (if it exists), but you should check for an updated PRN_GPS file!")
+
+if os.path.exists('PRN_GPS.gz'):
+  inF = gzip.open('PRN_GPS.gz', 'rb') # what is 'rb' ?
+  inF_r = inF.read().decode('utf-8')
+  inF.close()
+  prn_gps = io.StringIO(inF_r)
+else:
+  print("X! Don't have PRN_GPS file! Can't run!")
+  exit()
+
+#print (s)
+#print (decoded_file)
+
+#each complete row has 7 entries. There are some rows with fewer
+#than 7, but we don't care about them, so they can be skipped
+num_rows=7
+
+#test=prn_gps.readline()
+#print(test)
+#test=prn_gps.readline()
+#print(test)
+
+full_list=[]
+first_line = True
+for line in prn_gps:
+  if first_line: #skip the first line
+    first_line=False
+    continue
+  out = [int(e) if e.isdigit() else e for e in line.split()]
+  if len(out)==num_rows:
+    full_list.append(out)
+  elif len(out)>num_rows:
+    full_list.append(out[:num_rows])
+
+for i in full_list:
+  print(i[6])
+
+# convert 'date' to "days since..." - so easy to compare?
+
+#test=prn_gps.readline()
+
+#print(test2)
+
+
+
+################################################################################
+
+
 #print(fetchDaysOA(2006,254))
 
-formSwapsByDay()
+#formSwapsByDay()
 
 
 
