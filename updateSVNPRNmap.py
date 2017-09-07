@@ -21,9 +21,9 @@ def fetchDaysOA(year, day_of_year):
   response = urllib.request.urlopen(url)
   data=response.read()
   text = data.decode('utf-8')
-  print (text,"\n") #to test
+  #print (text,"\n") #to test
   #print (data,"\n")
-  print (len(text),"\n")
+  #print (len(text),"\n")
   if text=="ERROR: No such file" or text=='' or len(text)<100:
      return "nodata"
 
@@ -58,7 +58,7 @@ def fetchDaysOA(year, day_of_year):
   # Parse the "," seperated values, and convert to integers
   prn_list = [int(e) if e.isdigit() else e for e in str_prn_list.split(',')]
   prn_list = list(filter(None, prn_list)) #filter any missing points
-  print (prn_list,"\n")
+  #print (prn_list,"\n")
   
   #Forms the list of clocks
   str_clk_list=""
@@ -76,7 +76,7 @@ def fetchDaysOA(year, day_of_year):
   tmp_clk_list = [e for e in str_clk_list.split(',')]
   tmp_clk_list = list(filter(None, tmp_clk_list)) #filter any missing points
   clk_list = list(s[:2] for s in tmp_clk_list) #kills any trailing junk
-  print ("\n",clk_list,"\n")
+  #print ("\n",clk_list,"\n")
   
   #Safety check. Program will fail if the format of one of the OA files
   # is significantly different. The program will output an error messaage, but
@@ -138,7 +138,7 @@ def formSwapsByDay():
 # so it finishes.
   import os
 
-  filename="allClockSwapsByDay.txt"
+  filename="allClockSwapsByDay.out"
   
   # Check if file already exists. If so, reads in the last date that we have 
   # info for. If not, start at January 2000 [first 30s clk file is may 2000].
