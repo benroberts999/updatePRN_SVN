@@ -135,8 +135,9 @@ def formSwapsByDay(filename):
 # the OAs each time. It checks the existing file first, and starts where it left off.
 # Program will continue to run untill it cannot find/open 25 OA files in a row
 # After that, program assumes this is because we got to the end of the files,
-# so it finishes.
+# so it finishes. Also, stops once it gets to todays date!
   import os
+  import datetime
 
   #filename="allClockSwapsByDay.out"
 
@@ -163,13 +164,23 @@ def formSwapsByDay(filename):
   skipped_days=0
   ofile = open(filename, "a")
   
-  #Keep going until we have not found 10 OA files in a row
+  # Get todays  date (no point looking after this!)
+  today = datetime.datetime.now().date()
+  
+  #Keep going until we have not found 25 OA files in a row
   while skipped_days<25:
     day += 1
     if day>366:
       day=1
       year+=1
-    print(year, day)
+    
+    #exit early if gone past today.
+    the_date = datetime.date(year, 1, 1)+datetime.timedelta(days=(day-1))
+    if(the_date > today):
+      print("Reached todays date! Finished fetching OAs")
+      break
+    
+    print("Fetching OA for:", year, day)
     
     # Fetch and parse the OA file (func defined above)
     day_OA_line=fetchDaysOA(year,day)
@@ -393,21 +404,31 @@ def getOaPrnList(filename):
 #print(fetchDaysOA(2006,254))
 
 filename="allClockSwapsByDay.out"
-
-#formSwapsByDay(filename)
+formSwapsByDay(filename)
 
 #out=getPRNGPS()
 
-out=getOaPrnList(filename)
+#out=getOaPrnList(filename)
 
-for el in out:
-  print(el)
-
-
+#for el in out:
+#  print(el)
 
 
+#import datetime
+
+#tod=datetime.datetime.now().date()
+#jan_1_1970 = datetime.date(1970, 1, 1)
+
+#print (tod.year)
+
+#if(jan_1_1970 < tod):
+#  print ('yes')
+#else:
+#  print('no')
 
 
+#abc = datetime.date(1970, 1, 1)+datetime.timedelta(days=1-2)
+#print (abc)
 
 
 
