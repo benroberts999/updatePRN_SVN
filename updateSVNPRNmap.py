@@ -358,9 +358,9 @@ def getOaPrnList(filename):
   for line in ifile:
     line_list = [int(e) if e.isdigit() else e for e in line.split()]
     clk_list = line_list[4:] #first 4 elements contain date
-    yy=my_list[0]
-    mm=my_list[1]
-    dd=my_list[2]
+    yy=line_list[0]
+    mm=line_list[1]
+    dd=line_list[2]
     the_date = datetime.date(yy, mm, dd)
     days = the_date - jan_1_1970 #convert to days since 1/1/70
     line_list = [days.days] + clk_list
@@ -404,14 +404,15 @@ def getOaPrnList(filename):
 #print(fetchDaysOA(2006,254))
 
 filename="allClockSwapsByDay.out"
-formSwapsByDay(filename)
 
-#out=getPRNGPS()
+#formSwapsByDay(filename)
 
-#out=getOaPrnList(filename)
+out=getPRNGPS()
 
-#for el in out:
-#  print(el)
+out=getOaPrnList(filename)
+
+for el in out:
+  print(el)
 
 
 #import datetime
@@ -427,8 +428,7 @@ formSwapsByDay(filename)
 #  print('no')
 
 
-#abc = datetime.date(1970, 1, 1)+datetime.timedelta(days=1-2)
-#print (abc)
+
 
 
 
