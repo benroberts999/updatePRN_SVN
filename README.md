@@ -1,5 +1,14 @@
-# Update PRN_SVN using NASA/JPL operational advisories
+# Update PRN_SVN file using USNavCen operational advisories
 
+
+Creates a new file, called 
+PRN_GPS_GPSDM.txt, 
+that contains the full correct PRN-SVN-Clock mappings. 
+that is in roughly the same format as the original PRN_GPS file.
+
+********************************************************************************
+
+### PRNs, SVNs, Clocks, and Operational Advisories
 
 Each operational GPS satellite has a PRN (PseudoRandom Noise code).
 This is a label 1-32.
@@ -19,6 +28,7 @@ we are looking at, and what type of clock it is using.
 JPL supplies a file, PRN_GPS, that maps each PRN to the SVN for a given day.
 Available:
 ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz
+
 This file also ostensibly states which clock (Rb or Cs) was in use that day.
 The PRN-SVN mappings are accurate, however, the clock mappings are known to be
 largely wrong.
@@ -33,7 +43,7 @@ This program reads both the JPL PRN_GPS file, to determine the PRN-SVN mappings,
 and the USNavCen operational advisory files, to determine the PRN-clock mappings.
 It combines these two lists to form a new list that has the full correct
 PRN-SVN-Clock mappings. It outputs this list in a new file, called
-PRN_GPS_GPSDM, that is in roughly the same format as the original PRN_GPS file.
+PRN_GPS_GPSDM.txt, that is in roughly the same format as the original PRN_GPS file.
 
 (Or, at least, it _will_ do this, once the code is finished..)
 
@@ -44,11 +54,13 @@ PRN_GPS_GPSDM, that is in roughly the same format as the original PRN_GPS file.
 
 Downloads all the OA (operational advisory) files from:
 https://www.navcen.uscg.gov/?Do=gpsArchives
+
 There is one OA file for each day.
 
-Download path:
+Download path (DD=day of year (1-366); YYYY=year):
 https://www.navcen.uscg.gov/?Do=getAdvisory&advisory=DD&year=YYYY
--DD=day of year (1-366), YYYY=year
+
+
 
 Forms an output file, named allClockSwapsByDay.out, that contains one line
 for each day that a clock assignment was swapped.
@@ -64,10 +76,40 @@ list.
 
 
 
-
+********************************************************************************
 
 *There are a few instances where this is not the case.
 There are some days for which data was being recorded in the JPL files, but the
 OAs say no clock was in use.
 Also, there are a couple of days where OA says a Rb clock was being used, but I
 think it was actually a Cs clock.
+
+
+### To-Do:
+
+  * Make the final function that actually concatonates the two lists and creates
+    the desired output file.
+  * Make an "exception" file, to deal with the few cases where the OA files are
+    incorrect.
+  * Have a "note" system that states (human readable) inside the 
+    new PRN_GPS_GPSDM.txt file which lines were "not on AO" etc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
