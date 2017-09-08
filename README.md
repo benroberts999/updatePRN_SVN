@@ -66,8 +66,7 @@ list.
 
 
 
-*
-There are a few instances where this is not the case.
+*There are a few instances where this is not the case.
 There are some days for which data was being recorded in the JPL files, but the
 OAs say no clock was in use.
 Also, there are a couple of days where OA says a Rb clock was being used, but I
