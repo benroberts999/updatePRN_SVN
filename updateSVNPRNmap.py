@@ -124,9 +124,9 @@ def fetchDaysOA(year, day_of_year):
 
 
 ################################################################################
-def formSwapsByDay():
+def formSwapsByDay(filename):
 #Function that forms the "allClockSwapsByDay" file. This file contains one
-# line for each each that a clock was swapped (between Cs, Rb, or no).
+# line for each day that a clock was swapped (between Cs, Rb, or no).
 # The format of each line of the file is:
 #   year month day day_of_year Clock1 clock2 ..... clock32
 # There is one clock assignment for each PRN (1-32); can be 'no' if no clock
@@ -138,8 +138,8 @@ def formSwapsByDay():
 # so it finishes.
   import os
 
-  filename="allClockSwapsByDay.out"
-  
+  #filename="allClockSwapsByDay.out"
+
   # Check if file already exists. If so, reads in the last date that we have 
   # info for. If not, start at January 2000 [first 30s clk file is may 2000].
   if os.path.exists(filename):
@@ -313,15 +313,92 @@ def getPRNGPS():
   return prn_gps_list
 ################################################################################
 
+################################################################################
+def getOaPrnList(filename):
+#This program reads in the "allClockSwapsByDay" file that contains one line
+#for each day that there was a clock assignment change. This file is created by
+#the formSwapsByDay() function [which calls the fetchDaysOA() function], and
+#uses official Operational Advisories data.
+#I forms a list, that is in the form:
+#  initial_date final_date PRN clock
+#that says what clock was assignment to which prn for which period.
+#This list is already in order by prn then by date.
+#This list is returned.
+  import os
+  import datetime
+
+  #Reads in the allClockSwapsByDay if it exists.
+  if os.path.exists(filename):
+    ifile = open(filename, "r")
+  else:
+    print("File", filename, "does not exist!?? Can't run.")
+    exit()
+
+
+  # Date formats. Used by next block:
+  date_format="%Y-%m-%d"
+  jan_1_1970 = datetime.date(1970, 1, 1)
+
+  # Form the "swap list" from the swap file.
+  # List is in format initial_date clock1, clock2, ..., clock32
+  # One clock assignment (Rb/Cs/ns) for each PRN (1-32).
+  # Date is given as number of days since 1/1/1970
+  swap_list=[]
+  for line in ifile:
+    line_list = [int(e) if e.isdigit() else e for e in line.split()]
+    clk_list = line_list[4:] #first 4 elements contain date
+    yy=my_list[0]
+    mm=my_list[1]
+    dd=my_list[2]
+    the_date = datetime.date(yy, mm, dd)
+    days = the_date - jan_1_1970 #convert to days since 1/1/70
+    line_list = [days.days] + clk_list
+    swap_list.append(line_list)
+
+  #for el in swap_list:
+  #  print(el)
+
+  # Forms the "OA_PRN_CLK" list - like the PRN_GPS list, lists clock<->PRN 
+  # assignments.
+  # For each prn, finds when the clock swapped, then record the date range to list
+  oa_prn_clk_list=[]
+  for prn in range (1,32+1):
+    date_i = swap_list[0][0]
+    prev_date = date_i
+    prev_clock = swap_list[0][prn]
+    for el in swap_list:
+      this_date = el[0]
+      this_clock = el[prn]
+      if this_clock != prev_clock:
+        date_f = this_date - 1
+        if prev_clock != "no":
+          oa_prn_clk_list.append([date_i, date_f, prn, prev_clock])
+        date_i = this_date
+      prev_date = this_date
+      prev_clock = this_clock
+    # Got to the end of the file, clock currently has this assignment:
+    # '99999' just means 'very big number' - will be converted later!
+    if prev_clock != "no":
+      oa_prn_clk_list.append([date_i, 99999, prn, prev_clock])
+
+  #for el in oa_prn_clk_list:
+  #  print(el)
+
+  return oa_prn_clk_list
+################################################################################
+
 
 ################################################################################
 
 #print(fetchDaysOA(2006,254))
 
-#formSwapsByDay()
+filename="allClockSwapsByDay.out"
 
+#formSwapsByDay(filename)
 
-out=getPRNGPS()
+#out=getPRNGPS()
+
+out=getOaPrnList(filename)
 
 for el in out:
   print(el)
