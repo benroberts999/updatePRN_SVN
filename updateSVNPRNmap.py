@@ -199,67 +199,176 @@ def formSwapsByDay():
 
 
 ################################################################################
-import urllib.request
-import os
-import gzip
-import io
+def getPRNGPS():
+#Program downloads the latest version of the PRN_GPS.gz file from JPL/NASA.
+#This file has the correct PRN<->SVN mappings, but often has incorrect clock
+#assignments.
+#Parses this file into a list, which is in the format:
+#  initial_date final_date svn prn block orbit clock
+#The dates are given in number of days since 1/1/1970.
+#This file is sorted by prn, then by date, and returned.
+  import urllib.request
+  import os
+  import gzip
+  import io
+  import datetime
+  
+  url='ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz'
+  file_name='PRN_GPS.gz'
+  
+  #Try to download the PRN_GPS.gz file from JPL/NASA:
+  try:
+    urllib.request.urlretrieve(url, file_name)
+  except Exception:
+    print('X!  Error: Couldnt donwload PRN_GPS file')
+    print("X!  Will continue, using existing file (if it exists)")
+    print("X!  But you should check manually for an updated PRN_GPS file!")
 
-try:
-  urllib.request.urlretrieve('ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz', 'PRN_GPS.gz')
-except Exception:
-  print('X!  Error: Couldnt donwload PRN_GPS file - check internet connection?')
-  print("X!  Will continue, using existing file (if it exists), but you should check for an updated PRN_GPS file!")
+  #If file exists, read it in. Note: little stringe becaus it is g-zipped
+  if os.path.exists(file_name):
+    inF = gzip.open(file_name, 'rb') # what is 'rb' ?
+    inF_r = inF.read().decode('utf-8')
+    inF.close()
+    in_prn_gps = io.StringIO(inF_r)
+  else:
+    print("X! Don't have PRN_GPS file! Can't run!")
+    exit()
 
-if os.path.exists('PRN_GPS.gz'):
-  inF = gzip.open('PRN_GPS.gz', 'rb') # what is 'rb' ?
-  inF_r = inF.read().decode('utf-8')
-  inF.close()
-  prn_gps = io.StringIO(inF_r)
-else:
-  print("X! Don't have PRN_GPS file! Can't run!")
-  exit()
+  #each complete row has 7 entries. There are some rows with fewer
+  #than 7, but we don't care about them, so they can be dropped
+  num_rows=7
 
-#print (s)
-#print (decoded_file)
+  # Read through the PRN_GPS file, read each relevant row into a list:
+  prn_gps_list=[]
+  first_line = True
+  for line in in_prn_gps:
+    if first_line: #skip the first line
+      first_line=False
+      continue
+    out = [int(e) if e.isdigit() else e for e in line.split()]
+    if len(out)==num_rows:
+      prn_gps_list.append(out)
+    elif len(out)>num_rows:
+      #throw away the extra trailing junk:
+      prn_gps_list.append(out[:num_rows]) 
 
-#each complete row has 7 entries. There are some rows with fewer
-#than 7, but we don't care about them, so they can be skipped
-num_rows=7
 
-#test=prn_gps.readline()
-#print(test)
-#test=prn_gps.readline()
-#print(test)
 
-full_list=[]
-first_line = True
-for line in prn_gps:
-  if first_line: #skip the first line
-    first_line=False
-    continue
-  out = [int(e) if e.isdigit() else e for e in line.split()]
-  if len(out)==num_rows:
-    full_list.append(out)
-  elif len(out)>num_rows:
-    full_list.append(out[:num_rows])
+  ### Don't delete this yet! - we'll need it to convert the dates back!
+  #jan_1_1970 = datetime.date(1970, 1, 1)
+  #print(jan_1_1970)
+  #d1 = datetime.date(2005, 5, 5)
+  #delta = d1 - jan_1_1970
+  #print (delta.days)
 
-for i in full_list:
-  print(i[6])
+  #date_format="%Y-%m-%d"
+  #a_day="2005-5-5"
+  #d1=datetime.datetime.strptime(a_day,date_format)
+  #delta = d1.date() - jan_1_1970
+  #print (delta.days)
 
-# convert 'date' to "days since..." - so easy to compare?
+  #abc = jan_1_1970+datetime.timedelta(delta.days)
+  #print (abc)
 
-#test=prn_gps.readline()
+  # Date formats. Used by next block:
+  date_format="%Y-%m-%d"
+  jan_1_1970 = datetime.date(1970, 1, 1)
+  
+  # We will reference all dates as number of days since 1/1/1970, to make
+  # comparing two days as easy as possible. Will have to be converted back!
+  # This loop does the conversion.
+  # Note: PRN_GPS file has date='0000' when this is the current assignment!
+  for el in prn_gps_list:
+    str_date_i=el[0]
+    date_i=datetime.datetime.strptime(str_date_i,date_format)
+    days_i = date_i.date() - jan_1_1970
+    el[0]=days_i.days
+    str_date_f=el[1]
+    if str_date_f==0: #'0' in file means still current (i.e. beyond present day)
+      el[1]=99999   #just really big number. (remember to convert back later!)
+    else:
+      date_f=datetime.datetime.strptime(str_date_f,date_format)
+      days_f = date_f.date() - jan_1_1970
+      el[1]=days_f.days
 
-#print(test2)
+  #for el in prn_gps_list:
+  #  print(el)
 
+  #Index identifiers for the columns
+  i_date_i = 0
+  i_date_f = 1
+  i_svn = 2
+  i_prn = 3
+  i_blk = 4
+  i_orb = 5
+  i_clk = 6
+
+  # Sorts the list (by PRN, then by date)
+  from operator import itemgetter
+  prn_gps_list=sorted(prn_gps_list, key=itemgetter(i_prn,i_date_i))
+
+#  for el in prn_gps_list:
+#    print(el)
+  
+  return prn_gps_list
+################################################################################
 
 
 ################################################################################
 
-
 #print(fetchDaysOA(2006,254))
 
 #formSwapsByDay()
+
+
+out=getPRNGPS()
+
+for el in out:
+  print(el)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
