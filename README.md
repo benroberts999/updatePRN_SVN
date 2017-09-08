@@ -1,10 +1,10 @@
-# Update PRN_SVN file using USNavCen operational advisories
+# Update PRN_GPS file to map PRN to SVN Clock
 
 
-Creates a new file, called 
+Uses the JPLNASA PRN_GPS file and the USNavCen operational advisories to creates a new file, 
 PRN_GPS_GPSDM.txt, 
 that contains the full correct PRN-SVN-Clock mappings. 
-that is in roughly the same format as the original PRN_GPS file.
+This file is in roughly the same format as the original PRN_GPS file.
 
 ********************************************************************************
 
