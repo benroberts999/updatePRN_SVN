@@ -6,18 +6,20 @@ PRN_GPS_GPSDM.txt,
 that contains the full correct PRN-SVN-Clock mappings. 
 This file is in roughly the same format as the original PRN_GPS file.
 
+Uses a few python3 features.
+
 ********************************************************************************
 
 ### PRNs, SVNs, Clocks, and Operational Advisories
 
 Each operational GPS satellite has a PRN (PseudoRandom Noise code).
 This is a label 1-32.
-On any given day, one one sattelite have each PRN, however, the PRN assigned
+On any given day, only one satellite has each PRN, however, the PRN assigned
 to any specific satellite may change several times over the life of the 
 satellite.
 Each indevidual sattelite also has a unique identifier, called an SVN (Space
 Vehicle Number), which never changes.
-Also, each sattelite may have a Rb and a Cs clock, only one of which is 
+Also, each sattelite typically has both a Rb and a Cs clock on board, only one of which is 
 transmitting at any given time.
 
 The JPL bias data files list the data labelled by PRN (not SVN). They also don't
@@ -34,7 +36,10 @@ The PRN-SVN mappings are accurate, however, the clock mappings are known to be
 largely wrong.
 
 The US Navigation Center makes available so-called operational advisory
-(GPS OPSADVISORIES) files. There is one such file for every single day.
+(GPS OPSADVISORIES) files: 
+https://www.navcen.uscg.gov/?Do=gpsArchives
+
+There is one such file for every single day.
 These files state which clock was being used by each PRN on that day, but do
 not state which SVN the satellite is.
 For the most part, these files accurately record the clock-PRN mappings.*
@@ -59,8 +64,6 @@ There is one OA file for each day.
 
 Download path (DD=day of year (1-366); YYYY=year):
 https://www.navcen.uscg.gov/?Do=getAdvisory&advisory=DD&year=YYYY
-
-
 
 Forms an output file, named allClockSwapsByDay.out, that contains one line
 for each day that a clock assignment was swapped.
