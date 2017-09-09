@@ -217,7 +217,7 @@ def getPRNGPS():
 #Parses this file into a list, which is in the format:
 #  initial_date final_date svn prn block orbit clock
 #The dates are given in number of days since 1/1/1970.
-#This file is sorted by prn, then by date, and returned.
+#This list is sorted by prn, then by date, and returned.
   import urllib.request
   import os
   import gzip
@@ -398,22 +398,7 @@ def getOaPrnList(filename):
   return oa_prn_clk_list
 ################################################################################
 
-
-################################################################################
-
 #print(fetchDaysOA(2006,254))
-
-filename="allClockSwapsByDay.out"
-
-#formSwapsByDay(filename)
-
-out=getPRNGPS()
-
-out=getOaPrnList(filename)
-
-for el in out:
-  print(el)
-
 
 #import datetime
 
@@ -426,6 +411,61 @@ for el in out:
 #  print ('yes')
 #else:
 #  print('no')
+
+
+
+
+################################################################################
+
+
+
+filename="allClockSwapsByDay.out"
+
+#formSwapsByDay(filename)
+
+prn_gps=getPRNGPS()
+
+oa_map=getOaPrnList(filename)
+
+def checkOA(start_date, prn):
+  for line in oa_map:
+    if line[2] == prn:
+      oa_start = line[0]
+      oa_end = line[1]
+      clock = line[3]
+      if oa_start <= start_date and oa_end >= start_date:
+        # found!
+        return [1,oa_start,oa_end,clock]
+  #got to end of oa_map. therefore, didn't find!
+  for line in oa_map:
+    if line[2] == prn:
+      oa_start = line[0]
+      clock = line[3]
+      if oa_start > start_date:
+        #First mapping we have!
+        #Return last date that ISN'T in oa file! (hence '-1')
+        return [0,oa_start-1]
+  #If we get here, didn't find it at all? Just Use prn_gps
+  return [0,0]
+
+#print(checkOA(15000,4))
+
+prn_gps_gpsdm=[]
+
+for line in prn_gps:
+  #print(line)
+  start_date = line[0]
+  end_date = line[1]
+  svn = line[2]
+  prn = line[3]
+  block = line[4]
+  orb = line[5]
+  clock_prngps = line[6]
+  oa_out = checkOA(start_date, prn)
+  if oa_out[0] == 1: #worked!
+    print("yay")
+    
+
 
 
 
