@@ -139,8 +139,6 @@ def formSwapsByDay(filename):
   import os
   import datetime
 
-  #filename="allClockSwapsByDay.out"
-
   # Check if file already exists. If so, reads in the last date that we have 
   # info for. If not, start at January 2000 [first 30s clk file is may 2000].
   if os.path.exists(filename):
@@ -263,24 +261,6 @@ def getPRNGPS():
       #throw away the extra trailing junk:
       prn_gps_list.append(out[:num_rows]) 
 
-
-
-  ### Don't delete this yet! - we'll need it to convert the dates back!
-  #jan_1_1970 = datetime.date(1970, 1, 1)
-  #print(jan_1_1970)
-  #d1 = datetime.date(2005, 5, 5)
-  #delta = d1 - jan_1_1970
-  #print (delta.days)
-
-  #date_format="%Y-%m-%d"
-  #a_day="2005-5-5"
-  #d1=datetime.datetime.strptime(a_day,date_format)
-  #delta = d1.date() - jan_1_1970
-  #print (delta.days)
-
-  #abc = jan_1_1970+datetime.timedelta(delta.days)
-  #print (abc)
-
   # Date formats. Used by next block:
   date_format="%Y-%m-%d"
   jan_1_1970 = datetime.date(1970, 1, 1)
@@ -317,9 +297,6 @@ def getPRNGPS():
   # Sorts the list (by PRN, then by date)
   from operator import itemgetter
   prn_gps_list=sorted(prn_gps_list, key=itemgetter(i_prn,i_date_i))
-
-#  for el in prn_gps_list:
-#    print(el)
   
   return prn_gps_list
 ################################################################################
@@ -415,8 +392,131 @@ def getOaPrnList(filename):
 
 
 
-################################################################################
+  ### Don't delete this yet! - we'll need it to convert the dates back!
+  #jan_1_1970 = datetime.date(1970, 1, 1)
+  #print(jan_1_1970)
+  #d1 = datetime.date(2005, 5, 5)
+  #delta = d1 - jan_1_1970
+  #print (delta.days)
 
+  #date_format="%Y-%m-%d"
+  #a_day="2005-5-5"
+  #d1=datetime.datetime.strptime(a_day,date_format)
+  #delta = d1.date() - jan_1_1970
+  #print (delta.days)
+
+  #abc = jan_1_1970+datetime.timedelta(delta.days)
+  #print (abc)
+
+################################################################################
+def generatePrnGpsDm(prn_gps, oa_map):
+#Program takes in the prn_gps mapping list, and the OA mapping list to form the
+#correct prn-svn-clock mapping list, which is returned.
+# Returned list has same format as prn_gps list:
+#    initial_date final_date SVN PRN Block Orbit clock
+#(dates given in number of days since 1/1/1970.
+#Gets each PRN-SVN mapping line from prn_gps, then loops through the OA list 
+#looking for the corresponding PRN-Clock mapping. Note: the start and end dates
+#don't necisarily match, so the program takes that into account, and adds new 
+#lines when needed.
+#There is never a clock in use that is not listed in the PRN_GPS file, so it does
+#not add any lines in the case that there is a mapping in OA that doesn't exist 
+#in PRN_GPS.
+#However, there sometimes are occasions where there is a PRN_GPS entry, that has
+#no corresponding OA mapping. In this case, it assumes PRN_GPS was correct.
+#This assumption is not always correct, but when not, it must be dealt with 
+#"manually", using the 'corrections' routine.
+# In these cases, appends a comment "! Not on OA' to the list.
+#(Most of these don't have JPL data anyway, but some do!)
+#
+# STILL NEEDS TO BE CHECKED MANUALLY!
+
+  # Small function that loops through the OA list, and finds the clock assignment
+  # for a given PRN and day. Returns a list.
+  # First element of list is 1 if it successfully found the mappings
+  #  => [1, start_date, end_date, clock]
+  # If not, it finds the first date in the future that the map exists, and
+  # returns ==> [0, last_day_map_doesn't_exist]
+  # If it couldn't even find that, means it isn't on oa. Returns [0,0]
+  def checkOA(start_date, prn):
+    for line in oa_map:
+      if line[2] == prn:
+        oa_start = line[0]
+        oa_end = line[1]
+        clock = line[3]
+        if oa_start <= start_date and oa_end >= start_date:
+          # found!
+          return [1,oa_start,oa_end,clock]
+    #got to end of oa_map. therefore, didn't find!
+    for line in oa_map:
+      if line[2] == prn:
+        oa_start = line[0]
+        clock = line[3]
+        if oa_start > start_date:
+          #First mapping we have!
+          #Return last date that ISN'T in oa file! (hence '-1')
+          return [0,oa_start-1]
+    #If we get here, didn't find it at all? Just Use prn_gps
+    return [0,0]
+
+  # Output list:
+  prn_gps_gpsdm=[]
+  
+  # For each line (and each PRN) in the input prn_gps list, find the clock
+  # assignment using the OA list, work out the date range that the mappings are
+  # valid, and write out the results. Note: If a mapping is not found in the OA
+  # files, assumes the PRN_GPS file was correct.
+  for line in prn_gps:
+    start_date = line[0]
+    end_date = line[1]
+    svn = line[2]
+    prn = line[3]
+    #if prn!=1: continue
+    block = line[4]
+    orb = line[5]
+    clock_prngps = line[6]
+    #print("\n",line,"\n")
+    while(True):
+      oa_out = checkOA(start_date, prn)
+      if oa_out[0] == 1: #worked!
+        oa_start=oa_out[1]
+        oa_end=oa_out[2]
+        oa_clock = oa_out[3]
+        if oa_end >= end_date:
+          new_line = [start_date, end_date, svn, prn, block, orb, oa_clock]
+          prn_gps_gpsdm.append(new_line)
+          #print("a: ",new_line)
+          break
+        else:
+          new_line = [start_date, oa_end, svn, prn, block, orb, oa_clock]
+          prn_gps_gpsdm.append(new_line)
+          start_date = oa_end + 1
+          #print("b: ",new_line)
+          continue
+      elif oa_out[1] != 0:
+        the_end = oa_out[1]
+        the_clock = clock_prngps + "   ! Not on OA"
+        if the_end >= end_date:
+          the_end = end_date
+          new_line = [start_date, the_end, svn, prn, block, orb, the_clock]
+          prn_gps_gpsdm.append(new_line)
+          #print("c: ",new_line)
+          break;
+        else:
+          new_line = [start_date, the_end, svn, prn, block, orb, the_clock]
+          prn_gps_gpsdm.append(new_line)
+          start_date = the_end + 1
+          #print("d: ",new_line)
+          continue
+      else:
+        the_clock = clock_prngps + "   ! Not on OA"
+        new_line = [start_date, end_date, svn, prn, block, orb, the_clock]
+        prn_gps_gpsdm.append(new_line)
+        #print("e: ",new_line)
+        break
+        
+  return prn_gps_gpsdm
+################################################################################
 
 
 filename="allClockSwapsByDay.out"
@@ -427,67 +527,7 @@ prn_gps=getPRNGPS()
 
 oa_map=getOaPrnList(filename)
 
-def checkOA(start_date, prn):
-  for line in oa_map:
-    if line[2] == prn:
-      oa_start = line[0]
-      oa_end = line[1]
-      clock = line[3]
-      if oa_start <= start_date and oa_end >= start_date:
-        # found!
-        return [1,oa_start,oa_end,clock]
-  #got to end of oa_map. therefore, didn't find!
-  for line in oa_map:
-    if line[2] == prn:
-      oa_start = line[0]
-      clock = line[3]
-      if oa_start > start_date:
-        #First mapping we have!
-        #Return last date that ISN'T in oa file! (hence '-1')
-        return [0,oa_start-1]
-  #If we get here, didn't find it at all? Just Use prn_gps
-  return [0,0]
-
-#print(checkOA(15000,4))
-
-prn_gps_gpsdm=[]
-
-for line in prn_gps:
-  #print(line)
-  start_date = line[0]
-  end_date = line[1]
-  svn = line[2]
-  prn = line[3]
-  block = line[4]
-  orb = line[5]
-  clock_prngps = line[6]
-  while(True):
-    oa_out = checkOA(start_date, prn)
-    if oa_out[0] == 1: #worked!
-      oa_start=oa_out[1]
-      oa_end=oa_out[2]
-      oa_clock = oa_out[3]
-      if oa_end >= end_date:
-        new_line = [start_date, end_date, svn, prn, block, orb, oa_clock]
-        prn_gps_gpsdm.append(new_line)
-        break
-      else:
-        new_line = [start_date, oa_end, svn, prn, block, orb, oa_clock]
-        prn_gps_gpsdm.append(new_line)
-        start_date = oa_end + 1
-        continue
-    elif oa_out[1] != 0:
-      the_end = oa_out[1]
-      the_clock = clock_prngps + " ! Not on OA"
-      new_line = [start_date, the_end, svn, prn, block, orb, the_clock]
-      prn_gps_gpsdm.append(new_line)
-      start_date = the_end + 1
-      continue
-    else:
-      the_clock = clock_prngps + " ! Not on OA"
-      new_line = [start_date, end_date, svn, prn, block, orb, the_clock]
-      break
-        
+prn_gps_gpsdm = generatePrnGpsDm(prn_gps,oa_map)
     
 for el in prn_gps_gpsdm:
   print(el)
