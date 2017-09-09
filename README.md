@@ -1,4 +1,4 @@
-# Update PRN_GPS file to map PRN to SVN Clock
+# Update PRN_GPS file to map PRN to SVN & Clock
 
 
 Uses the JPLNASA PRN_GPS file and the USNavCen operational advisories to creates a new file, 
