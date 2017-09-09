@@ -461,11 +461,36 @@ for line in prn_gps:
   block = line[4]
   orb = line[5]
   clock_prngps = line[6]
-  oa_out = checkOA(start_date, prn)
-  if oa_out[0] == 1: #worked!
-    print("yay")
+  while(True):
+    oa_out = checkOA(start_date, prn)
+    if oa_out[0] == 1: #worked!
+      oa_start=oa_out[1]
+      oa_end=oa_out[2]
+      oa_clock = oa_out[3]
+      if oa_end >= end_date:
+        new_line = [start_date, end_date, svn, prn, block, orb, oa_clock]
+        prn_gps_gpsdm.append(new_line)
+        break
+      else:
+        new_line = [start_date, oa_end, svn, prn, block, orb, oa_clock]
+        prn_gps_gpsdm.append(new_line)
+        start_date = oa_end + 1
+        continue
+    elif oa_out[1] != 0:
+      the_end = oa_out[1]
+      the_clock = clock_prngps + " ! Not on OA"
+      new_line = [start_date, the_end, svn, prn, block, orb, the_clock]
+      prn_gps_gpsdm.append(new_line)
+      start_date = the_end + 1
+      continue
+    else:
+      the_clock = clock_prngps + " ! Not on OA"
+      new_line = [start_date, end_date, svn, prn, block, orb, the_clock]
+      break
+        
     
-
+for el in prn_gps_gpsdm:
+  print(el)
 
 
 
