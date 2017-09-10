@@ -5,6 +5,8 @@ Uses the JPL/NASA PRN_GPS file and the USNavCen operational advisories to create
 PRN_GPS_GPSDM.txt, 
 that contains the full correct PRN-SVN-Clock mappings. 
 This file is in roughly the same format as the original PRN_GPS file.
+Also takes in an optional 'exceptions.in' file, where we can manually add clock
+assignments that will over-ride those from PRN_GPS and OA.
 
 Uses a few python3 features.
 
@@ -49,8 +51,15 @@ and the USNavCen operational advisory files, to determine the PRN-clock mappings
 It combines these two lists to form a new list that has the full correct
 PRN-SVN-Clock mappings. It outputs this list in a new file, called
 PRN_GPS_GPSDM.txt, that is in roughly the same format as the original PRN_GPS file.
+New file is ordered by SVN (then date), has format:
+  initialDate finalDate SVN PRN Block Orbit Clock !notes
+nb: 'orbit' never used. program just prints 'orb' (but must be same format as
+original PRN_GPS file).
 
-(Or, at least, it _will_ do this, once the code is finished..)
+There is also an optional input file, `exceptions.in' where we may list any
+additional clock assignments that we believe are incorrect in the OAs.
+The program will over-ride the OA assignments with those from 'exceptions.in'.
+This file uses same format as above.
 
 
 ### Rough description of method
@@ -72,11 +81,16 @@ every single OA file each time.
 When you run the program, it first checks this output file (if it exists), and
 just starts where it left off.
 
-Then, this output file is read from disk into a list.
+Then, this OA output file is read from disk into a list.
 
 Also, the program downloads the PRN_GPS file from JPL/NASA, and reads it into a
 list.
 
+Combines the OA list with the PRN_GPS list to make a new list, called PRN_GPS_GPSDM,
+which has correct PRN-SVN-Clock mappings.
+
+Then, reads in the optional exceptions.in file.
+Overwrites any assignements with those given.
 
 
 ********************************************************************************
@@ -88,14 +102,6 @@ Also, there are a couple of days where OA says a Rb clock was being used, but I
 think it was actually a Cs clock.
 
 
-### To-Do:
-
-  * Make the final function that actually concatonates the two lists and creates
-    the desired output file.
-  * Make an "exception" file, to deal with the few cases where the OA files are
-    incorrect.
-  * Have a "note" system that states (human readable) inside the 
-    new PRN_GPS_GPSDM.txt file which lines were "not on AO" etc.
 
 
 

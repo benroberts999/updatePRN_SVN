@@ -8,7 +8,7 @@
 !
   2005-12-01   2005-12-18   39   09   IIA  XX  Cs   OA has Rb (*1)
   2005-12-21   2007-10-29   39   09   IIA  XX  Cs   OA has Rb (*2)
-  2011-06-23   2011-06-27   40   10   IIA  XX  Cs   OA has CB ?
+  2011-06-23   2011-06-27   40   10   IIA  XX  Cs   OA has CB (*3)
 !
 ! *1 (see below): OA has Rb, but there is no gap in data between previous
 !    clock (Cs), and the AVAR/hist/etc. point to Cs. 
@@ -16,3 +16,4 @@
 !    think this one is also Cs.
 ! OA has PRN09 Cs->Rb on 20051201; however, no gap in data
 ! OA has PRN09 Rb->Cs on 20071030; however, no gap in data
+! *3 It appeards as this is Cs, but just a guess. Not sure if it shows up in JPL data?

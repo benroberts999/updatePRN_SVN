@@ -141,7 +141,9 @@ def formSwapsByDay(filename):
 # This is just to save time next time!
   import os
   import datetime
-
+  
+  print("Downloading and storing any new OA lists from US NavCen")
+  
   # Check if file already exists. If so, reads in the last date that we have 
   # info for. If not, start at January 2000 [first 30s clk file is may 2000].
   if os.path.exists(filename):
@@ -239,6 +241,8 @@ def getPRNGPS():
   import datetime
   from operator import itemgetter
   
+  print("Getting PRN_GPS from jpl.nasa.gov")
+  
   url='ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz'
   file_name='PRN_GPS.gz'
   
@@ -330,6 +334,8 @@ def getOaPrnList(filename):
 #This list is returned.
   import os
   import datetime
+  
+  print("Reading the allClockSwapsByDay file form OA prn-clock list")
 
   #Reads in the allClockSwapsByDay if it exists.
   if os.path.exists(filename):
@@ -412,8 +418,8 @@ def generatePrnGpsDm(prn_gps, oa_map):
 #"manually", using the 'corrections' routine.
 # In these cases, appends a comment "! Not on OA' to the list.
 #(Most of these don't have JPL data anyway, but some do!)
-#
-# STILL NEEDS TO BE CHECKED MANUALLY!
+
+  print("Generateing the PRN_GPS_GPSDM.txt file")
 
   # Small function that loops through the OA list, and finds the clock assignment
   # for a given PRN and day. Returns a list.
@@ -506,7 +512,9 @@ def generatePrnGpsDm(prn_gps, oa_map):
 def writePrnGpsGpsdm(prn_gps_gpsdm, out_filename):
   import datetime
   from operator import itemgetter
-    
+  
+  print("Writine the "+out_filename+" file to disk")
+  
   ofile = open(out_filename, "w")
   
   #Used to convert from 'days since 1/1/70' to date
@@ -561,10 +569,14 @@ def writePrnGpsGpsdm(prn_gps_gpsdm, out_filename):
 
 ################################################################################
 def getExceptions(prn_gps_gpsdm, exceptions_fn):
+# Reads the optional exceptions.in file, and over-rides the existing assignments
+# with those from the exceptions. Algorithms is a little sloopy, but it works.
   import os
   import datetime
   from operator import itemgetter
-    
+  
+  print("Incorperating the exceptions if any exist")
+  
   #Reads in the allClockSwapsByDay if it exists.
   if os.path.exists(exceptions_fn):
     ifile = open(exceptions_fn, "r")
@@ -575,12 +587,15 @@ def getExceptions(prn_gps_gpsdm, exceptions_fn):
   # Date formats. Used by next block:
   date_format="%Y-%m-%d"
   jan_1_1970 = datetime.date(1970, 1, 1)
-
+  
+  #For each non-comment line in the exceptions file, try to find where it
+  #fits in. Slots it in, modifying the other lines so as not to miss any points.
   for line in ifile:
     #parse the line from the exceptions file to get correct format
     line_list = [int(e) if e.isdigit() else e for e in line.split()]
-    if line_list[0][0]=="!":
+    if line_list[0][0]=="!": #comment line
       continue
+    # sepperate and combine all the 'notes' elements
     note = " ".join(line_list[7:])
     line_list = line_list[:7]
     line_list.append(note)
@@ -713,7 +728,7 @@ def getExceptions(prn_gps_gpsdm, exceptions_fn):
 
 
 filename="allClockSwapsByDay.out"
-out_filename = "PRN_GPS_GPSDM_test.txt"
+out_filename = "PRN_GPS_GPSDM.txt"
 exceptions_fn = "exceptions.in"
 
 # Check the web for any OA updates, form allClockSwapsByDay.out file.
@@ -725,15 +740,16 @@ oa_map=getOaPrnList(filename)
 # Download the latest PRN_GPS from JPL, read/parse it into list
 prn_gps=getPRNGPS()
 
-# 
+# Make initial PRN_GPS_GPSDM file
 prn_gps_gpsdm = generatePrnGpsDm(prn_gps,oa_map)
 
+# Incorperate any listed exceptions
 prn_gps_gpsdm = getExceptions(prn_gps_gpsdm,exceptions_fn)
 
+#write final PRN_GPS_GPSDM to disk
 writePrnGpsGpsdm(prn_gps_gpsdm,out_filename) 
 
-
-
+print("Done :)")
 
 
 
