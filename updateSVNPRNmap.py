@@ -221,6 +221,7 @@ def getPRNGPS():
   import gzip
   import io
   import datetime
+  from operator import itemgetter
   
   url='ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz'
   file_name='PRN_GPS.gz'
@@ -295,7 +296,6 @@ def getPRNGPS():
   i_clk = 6
 
   # Sorts the list (by PRN, then by date)
-  from operator import itemgetter
   prn_gps_list=sorted(prn_gps_list, key=itemgetter(i_prn,i_date_i))
   
   return prn_gps_list
@@ -529,18 +529,70 @@ oa_map=getOaPrnList(filename)
 
 prn_gps_gpsdm = generatePrnGpsDm(prn_gps,oa_map)
     
-for el in prn_gps_gpsdm:
-  print(el)
+
+import datetime
+from operator import itemgetter
+  
+ofile = open("PRN_GPS_GPSDM_test.txt", "w")
+
+jan_1_1970 = datetime.date(1970, 1, 1)
+
+# Sorts the list (by SVN, then by date)
+prn_gps_gpsdm=sorted(prn_gps_gpsdm, key=itemgetter(2,0))
+
+# Get todays  date
+today = datetime.datetime.now().date()
+
+ofile.write(str(today)+"\n")
+
+header ="! Our updated PRN_GPS file.\n"
+header+="! Combines JPL PRN_GPS file (that has accurate PRN-SVN mapptings)\n"
+header+="! with the US-NavCen Operational Advisories (OAs) (that contain accurate PRN-Clock mappings.\n"
+header+="! Comment lines start with '!'\n"
+header+="! Last fetched: "+str(today)+"\n!\n"
+header+="! init. date   fin. date  svn  prn  blk  orb  clk    note\n"
+ofile.write(header)
+
+for line in prn_gps_gpsdm:
+  date_i = "  "+str(jan_1_1970+datetime.timedelta(days=line[0]))+"  "
+  if(line[1]==99999):
+    date_f="0000      "+"   "
+  else:
+    date_f = str(jan_1_1970+datetime.timedelta(days=line[1]))+"   "
+  if line[2]<10 :
+    svn = " "+str(line[2])+"   "
+  else:
+    svn = str(line[2])+"   "
+  if(line[3]<10):
+    prn=" "+str(line[3])+"  "
+  else:
+    prn=str(line[3])+"  "
+  if(line[4]=="I"):
+    block = "I  "+"  "
+  elif(line[4]=="II"):
+    block = "II "+"  "
+  else:
+    block = line[4]+"  "
+  orbit = "orb"+"  "  #Don't need orbits, but file format needs to match
+  clock = line[6]+"  "
+  outline = date_i + date_f + svn + prn + block + orbit + clock + "\n"
+  ofile.write(outline)
+ofile.close()
+
+
+#abc = jan_1_1970+datetime.timedelta(days=day)
 
 
 
+#tod=datetime.datetime.now().date()
+#jan_1_1970 = datetime.date(1970, 1, 1)
 
+#print (tod.year)
 
-
-
-
-
-
+#if(jan_1_1970 < tod):
+#  print ('yes')
+#else:
+#  print('no')
 
 
 
