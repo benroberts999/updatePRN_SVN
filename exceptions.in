@@ -8,6 +8,7 @@
 !
   2005-12-01   2005-12-18   39   09   IIA  XX  Cs   OA has Rb (*1)
   2005-12-21   2007-10-29   39   09   IIA  XX  Cs   OA has Rb (*2)
+  2011-06-23   2011-06-27   40   10   IIA  XX  Cs   OA has CB ?
 !
 ! *1 (see below): OA has Rb, but there is no gap in data between previous
 !    clock (Cs), and the AVAR/hist/etc. point to Cs. 

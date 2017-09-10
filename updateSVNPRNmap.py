@@ -136,6 +136,8 @@ def formSwapsByDay(filename):
 # Program will continue to run untill it cannot find/open 25 OA files in a row
 # After that, program assumes this is because we got to the end of the files,
 # so it finishes. Also, stops once it gets to todays date!
+# When it gets to todays date, it writes a line to the file even if there weren't
+# any swaps. This is just to save time next time!
   import os
   import datetime
 
@@ -149,8 +151,8 @@ def formSwapsByDay(filename):
     last = line
     mylist = [int(e) if e.isdigit() else e for e in last.split()]
     prev_clk_list=mylist[4:]
-    year=mylist[0]
-    day=mylist[3]+1
+    prev_year=year=mylist[0]
+    prev_day=day=mylist[3]  #? why +1?
   else:
     year=2000
     day=1
@@ -176,6 +178,11 @@ def formSwapsByDay(filename):
     the_date = datetime.date(year, 1, 1)+datetime.timedelta(days=(day-1))
     if(the_date > today):
       print("Reached todays date! Finished fetching OAs")
+      if(today.year != prev_year or day-1 != prev_day):
+        ofile.write(str(today.year)+" "+str(today.month)+" "+str(today.day)+" "+str(day-1)+" ")
+        for clk in prev_clk_list:
+          ofile.write(clk+" ")
+        ofile.write("\n")
       break
     
     print("Fetching OA for:", year, day)
@@ -322,7 +329,6 @@ def getOaPrnList(filename):
     print("File", filename, "does not exist!?? Can't run.")
     exit()
 
-
   # Date formats. Used by next block:
   date_format="%Y-%m-%d"
   jan_1_1970 = datetime.date(1970, 1, 1)
@@ -375,38 +381,7 @@ def getOaPrnList(filename):
   return oa_prn_clk_list
 ################################################################################
 
-#print(fetchDaysOA(2006,254))
 
-#import datetime
-
-#tod=datetime.datetime.now().date()
-#jan_1_1970 = datetime.date(1970, 1, 1)
-
-#print (tod.year)
-
-#if(jan_1_1970 < tod):
-#  print ('yes')
-#else:
-#  print('no')
-
-
-
-
-  ### Don't delete this yet! - we'll need it to convert the dates back!
-  #jan_1_1970 = datetime.date(1970, 1, 1)
-  #print(jan_1_1970)
-  #d1 = datetime.date(2005, 5, 5)
-  #delta = d1 - jan_1_1970
-  #print (delta.days)
-
-  #date_format="%Y-%m-%d"
-  #a_day="2005-5-5"
-  #d1=datetime.datetime.strptime(a_day,date_format)
-  #delta = d1.date() - jan_1_1970
-  #print (delta.days)
-
-  #abc = jan_1_1970+datetime.timedelta(delta.days)
-  #print (abc)
 
 ################################################################################
 def generatePrnGpsDm(prn_gps, oa_map):
@@ -575,91 +550,178 @@ def writePrnGpsGpsdm(prn_gps_gpsdm, out_filename):
 
 
 
+################################################################################
+def getExceptions(prn_gps_gpsdm, exceptions_fn):
+  import os
+  import datetime
+  from operator import itemgetter
+    
+  #Reads in the allClockSwapsByDay if it exists.
+  if os.path.exists(exceptions_fn):
+    ifile = open(exceptions_fn, "r")
+  else:
+    print("bah")
+   #return
 
+  # Date formats. Used by next block:
+  date_format="%Y-%m-%d"
+  jan_1_1970 = datetime.date(1970, 1, 1)
 
+  for line in ifile:
+    #parse the line from the exceptions file to get correct format
+    line_list = [int(e) if e.isdigit() else e for e in line.split()]
+    if line_list[0][0]=="!":
+      continue
+    note = " ".join(line_list[7:])
+    line_list = line_list[:7]
+    line_list.append(note)
+    #make list in correct format:
+    i_date = [int(e) for e in line_list[0].split("-")]
+    yi=i_date[0]
+    mi=i_date[1]
+    di=i_date[2]
+    i_date = datetime.date(yi, mi, di)
+    #convert to days since 1/1/70:
+    i_days = i_date - jan_1_1970
+    if line_list[1]==0:
+      f_days=99999
+      line_list = [i_days.days] + [f_days] + line_list[2:]
+    else:
+      f_date = [int(e) for e in line_list[1].split("-")]
+      yf=f_date[0]
+      mf=f_date[1]
+      df=f_date[2]
+      f_date = datetime.date(yf, mf, df)
+      f_days = f_date - jan_1_1970
+      line_list = [i_days.days] + [f_days.days] + line_list[2:]
+    #print(line_list)
+    di = line_list[0]
+    df = line_list[1]
+    svn= line_list[2]
+    prn= line_list[3]
+    blk= line_list[4]
+    orb= line_list[5]
+    clk= line_list[6]
+    note=line_list[7]
+    #outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+    #print(outlist)
+    #for prngps_line in prn_gps_gpsdm:
+    # Re-sorts the list (by PRN, then by date)
+    prn_gps_gpsdm=sorted(prn_gps_gpsdm, key=itemgetter(3,0))
+    orig_length = len(prn_gps_gpsdm) #will add entries (to the end)!
+    for l in range (orig_length): #l is the index!
+      prngps_line = prn_gps_gpsdm[l]
+      #print(prngps_line)
+      odi  = prngps_line[0]
+      odf  = prngps_line[1]
+      osvn = prngps_line[2]
+      oprn = prngps_line[3]
+      oblk = prngps_line[4]
+      oorb = prngps_line[5]
+      oclk = prngps_line[6]
+      # Check: if we're at end of file without a 'break' means not yet found:
+      if oprn>prn:
+        print("here")
+        #Moved passed the correct PRNs without finding a match, means
+        #we shuold just write out the whole new entry:
+        outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+        prn_gps_gpsdm.append(outlist)
+        break
+      if oprn != prn: continue #compare PRNs
+      if df<odi:
+        #add new entry:
+        outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+        prn_gps_gpsdm.append(outlist)
+        break
+      elif di<odi and df>=odi and df<odf:
+        #modify existing entry:
+        prngps_line[0] = df+1
+        prn_gps_gpsdm[l] = prngps_line
+        # and add new entry:
+        outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+        prn_gps_gpsdm.append(outlist)
+        break
+      elif di<odi and df >= odf:
+        #modify existing:
+        prngps_line[0] = di
+        prngps_line[2] = svn
+        prngps_line[3] = prn
+        prngps_line[4] = blk
+        prngps_line[5] = orb
+        prngps_line[6] = clk+"   ! "+note
+        prn_gps_gpsdm[l] = prngps_line
+        # Update current exception line, go to next prn line:
+        di = odf+1
+        if df>=di:
+          continue
+        else:
+          break
+      elif di>=odi and di<=odf and df<=odf:
+        #modify existing:
+        prngps_line[0] = di
+        prngps_line[1] = df
+        prngps_line[2] = svn
+        prngps_line[3] = prn
+        prngps_line[4] = blk
+        prngps_line[5] = orb
+        prngps_line[6] = clk+"   ! "+note
+        prn_gps_gpsdm[l] = prngps_line
+        # add two new lines (with original assignments):
+        if di-1>=odi:
+          outlist = [odi,di-1,osvn,oprn,oblk,oorb,oclk]
+          prn_gps_gpsdm.append(outlist)
+        if odf>=df+1:
+          outlist = [df+1,odf,osvn,oprn,oblk,oorb,oclk]
+          prn_gps_gpsdm.append(outlist)
+        break
+      elif di>=odi and di<=odf and df>odf:
+        #Add new entry:
+        if di-1>=odi:
+          outlist = [odi,di-1,osvn,oprn,oblk,oorb,oclk]
+          prn_gps_gpsdm.append(outlist)
+        #Modify existing:
+        prngps_line[0] = di
+        prngps_line[1] = odf
+        prngps_line[2] = svn
+        prngps_line[3] = prn
+        prngps_line[4] = blk
+        prngps_line[5] = orb
+        prngps_line[6] = clk+"   ! "+note
+        prn_gps_gpsdm[l] = prngps_line
+        # Update current exception line, go to next prn line:
+        di = odf+1
+        if df>=di:
+          continue
+        else:
+          break
+      #End if
+    #End for (loop over PRNs)
+  #End for (loop over exceptions)
+
+  # Re-sorts the list (by PRN, then by date), returns it
+  return sorted(prn_gps_gpsdm, key=itemgetter(3,0))
+################################################################################
 
 
 filename="allClockSwapsByDay.out"
 out_filename = "PRN_GPS_GPSDM_test.txt"
 exceptions_fn = "exceptions.in"
-#formSwapsByDay(filename)
 
-prn_gps=getPRNGPS()
+# Check the web for any OA updates, form allClockSwapsByDay.out file.
+formSwapsByDay(filename)
 
+# Read in the allClockSwapsByDay.out file, parse into list
 oa_map=getOaPrnList(filename)
 
+# Download the latest PRN_GPS from JPL, read/parse it into list
+prn_gps=getPRNGPS()
+
+# 
 prn_gps_gpsdm = generatePrnGpsDm(prn_gps,oa_map)
-    
-writePrnGpsGpsdm(prn_gps_gpsdm,out_filename)
 
+prn_gps_gpsdm = getExceptions(prn_gps_gpsdm,exceptions_fn)
 
-
-
-
-import os
-import datetime
-
-#Reads in the allClockSwapsByDay if it exists.
-if os.path.exists(exceptions_fn):
-  ifile = open(exceptions_fn, "r")
-else:
-  print("bah")
- #return
-
-# Date formats. Used by next block:
-date_format="%Y-%m-%d"
-jan_1_1970 = datetime.date(1970, 1, 1)
-
-
-for line in ifile:
-  #parse the line from the exceptions file to get correct format
-  line_list = [int(e) if e.isdigit() else e for e in line.split()]
-  if line_list[0][0]=="!":
-    continue
-  note = " ".join(line_list[7:])
-  line_list = line_list[:7]
-  line_list.append(note)
-  i_date = [int(e) for e in line_list[0].split("-")]
-  f_date = [int(e) for e in line_list[1].split("-")]
-  yi=i_date[0]
-  mi=i_date[1]
-  di=i_date[2]
-  yf=f_date[0]
-  mf=f_date[1]
-  df=f_date[2]
-  i_date = datetime.date(yi, mi, di)
-  f_date = datetime.date(yf, mf, df)
-  #convert to days since 1/1/70:
-  i_days = i_date - jan_1_1970
-  f_days = f_date - jan_1_1970
-  #make list in correct format:
-  line_list = [i_days.days] + [f_days.days] + line_list[2:]
-  #print(line_list)
-  di = line_list[0]
-  df = line_list[1]
-  svn= line_list[2]
-  prn= line_list[3]
-  blk= line_list[4]
-  orb= line_list[5]
-  clk= line_list[6]
-  note=line_list[7]
-  outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
-  print(outlist)
-  for prngps_line in prn_gps_gpsdm:
-    if prngps_line[3] != prn: continue #compare PRNs
-    odi = prngps_line[0]
-    odf = prngps_line[1]
-#    if df<odi:
-#      outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
-#      prn_gps_gpsdm.append
-    
-
-#for el in prn_gps_gpsdm:
-#  print (el)
-
-
-
-
+writePrnGpsGpsdm(prn_gps_gpsdm,out_filename) 
 
 
 
