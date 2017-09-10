@@ -1,0 +1,17 @@
+! This file contains the exceptions. i.e., manually add any lines to overide
+! what's in the PRN_GPS or OA files.
+! Note: does this by PRN (not SVN)
+! One line per entry, in the format:
+!   intitial_date final_date SVN PRN BLK Orbit CLOCK Note
+! Date in format "yyyy-mm-dd". Put "0000" for current assignments.
+! Keep 'note' short, e.g.: "OA has Rb"
+!
+  2005-12-01   2005-12-18   39   09   IIA  XX  Cs   OA has Rb (*1)
+  2005-12-21   2007-10-29   39   09   IIA  XX  Cs   OA has Rb (*2)
+!
+! *1 (see below): OA has Rb, but there is no gap in data between previous
+!    clock (Cs), and the AVAR/hist/etc. point to Cs. 
+! *2 Same as above; no gap between this clock and next one (Cs), so I
+!    think this one is also Cs.
+! OA has PRN09 Cs->Rb on 20051201; however, no gap in data
+! OA has PRN09 Rb->Cs on 20071030; however, no gap in data

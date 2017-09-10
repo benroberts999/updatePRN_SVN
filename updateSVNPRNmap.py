@@ -612,16 +612,15 @@ jan_1_1970 = datetime.date(1970, 1, 1)
 
 
 for line in ifile:
+  #parse the line from the exceptions file to get correct format
   line_list = [int(e) if e.isdigit() else e for e in line.split()]
   if line_list[0][0]=="!":
     continue
-  note = " ".join(line_list[6:])
-  line_list = line_list[:5]
+  note = " ".join(line_list[7:])
+  line_list = line_list[:7]
   line_list.append(note)
-  print (line_list)
   i_date = [int(e) for e in line_list[0].split("-")]
   f_date = [int(e) for e in line_list[1].split("-")]
-  print (i_date, f_date)
   yi=i_date[0]
   mi=i_date[1]
   di=i_date[2]
@@ -630,15 +629,33 @@ for line in ifile:
   df=f_date[2]
   i_date = datetime.date(yi, mi, di)
   f_date = datetime.date(yf, mf, df)
-  #convert to days since 1/1/70
+  #convert to days since 1/1/70:
   i_days = i_date - jan_1_1970
   f_days = f_date - jan_1_1970
+  #make list in correct format:
   line_list = [i_days.days] + [f_days.days] + line_list[2:]
-  print(line_list)
+  #print(line_list)
+  di = line_list[0]
+  df = line_list[1]
+  svn= line_list[2]
+  prn= line_list[3]
+  blk= line_list[4]
+  orb= line_list[5]
+  clk= line_list[6]
+  note=line_list[7]
+  outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+  print(outlist)
+  for prngps_line in prn_gps_gpsdm:
+    if prngps_line[3] != prn: continue #compare PRNs
+    odi = prngps_line[0]
+    odf = prngps_line[1]
+#    if df<odi:
+#      outlist = [di,df,svn,prn,blk,orb,clk+"   ! "+note]
+#      prn_gps_gpsdm.append
+    
 
-
-
-
+#for el in prn_gps_gpsdm:
+#  print (el)
 
 
 
