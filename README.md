@@ -1,8 +1,8 @@
 # Update PRN_GPS file to map PRN to SVN & Clock
 
 
-Uses the JPL/NASA PRN_GPS file and the USNavCen operational advisories to creates a new file, 
-PRN_GPS_GPSDM.txt, 
+Uses the JPL/NASA PRN_GPS file and the USNavCen operational advisories to 
+create a new file, PRN_GPS_GPSDM.txt, 
 that contains the full correct PRN-SVN-Clock mappings. 
 This file is in roughly the same format as the original PRN_GPS file.
 Also takes in an optional 'exceptions.in' file, where we can manually add clock
@@ -15,14 +15,14 @@ Uses a few python3 features.
 ### PRNs, SVNs, Clocks, and Operational Advisories
 
 Each operational GPS satellite has a PRN (PseudoRandom Noise code).
-This is a label 1-32.
+This is a label 1-32 (like a `slot' in the GPS constellation).
 On any given day, only one satellite has each PRN, however, the PRN assigned
 to any specific satellite may change several times over the life of the 
 satellite.
 Each indevidual sattelite also has a unique identifier, called an SVN (Space
 Vehicle Number), which never changes.
-Also, each sattelite typically has both a Rb and a Cs clock on board, only one of which is 
-transmitting at any given time.
+Also, each sattelite typically has both a Rb and a Cs clock on board, only one 
+of which is transmitting at any given time.
 
 The JPL bias data files list the data labelled by PRN (not SVN). They also don't
 state which clock type (Rb/Cs) was in use.
@@ -50,7 +50,8 @@ This program reads both the JPL PRN_GPS file, to determine the PRN-SVN mappings,
 and the USNavCen operational advisory files, to determine the PRN-clock mappings.
 It combines these two lists to form a new list that has the full correct
 PRN-SVN-Clock mappings. It outputs this list in a new file, called
-PRN_GPS_GPSDM.txt, that is in roughly the same format as the original PRN_GPS file.
+PRN_GPS_GPSDM.txt, that is in roughly the same format as the original PRN_GPS 
+file.
 New file is ordered by SVN (then date), has format:
   initialDate finalDate SVN PRN Block Orbit Clock !notes
 nb: 'orbit' never used. program just prints 'orb' (but must be same format as
@@ -63,8 +64,6 @@ This file uses same format as above.
 
 
 ### Rough description of method
-
-**Note** the code is far from finished, still in the testing phase.
 
 Downloads all the OA (operational advisory) files from:
 https://www.navcen.uscg.gov/?Do=gpsArchives
@@ -86,8 +85,8 @@ Then, this OA output file is read from disk into a list.
 Also, the program downloads the PRN_GPS file from JPL/NASA, and reads it into a
 list.
 
-Combines the OA list with the PRN_GPS list to make a new list, called PRN_GPS_GPSDM,
-which has correct PRN-SVN-Clock mappings.
+Combines the OA list with the PRN_GPS list to make a new list, called 
+PRN_GPS_GPSDM, which has correct PRN-SVN-Clock mappings.
 
 Then, reads in the optional exceptions.in file.
 Overwrites any assignements with those given.
@@ -101,7 +100,15 @@ OAs say no clock was in use.
 Also, there are a couple of days where OA says a Rb clock was being used, but I
 think it was actually a Cs clock.
 
+e.g., SVN 40 is marked 'CB' for a few days in 2011, I think it's Cs. 
+Also, there are a few assignments that I think are incorrect. This assumption is
+based on two facts, 1) that there is no gap in the clock data when the OAs says
+the clock was swapped (which is impossible), and the Allan Variance, histogram
+etc. (calculated by me) indicates this should be a Cs clock (OA has Rb). The
+lines in question are:
 
+  * 2005-12-01   2005-12-18   39   09   IIA   A-1   Cs   !!!OA has rb (*1)
+  * 2005-12-21   2007-10-29   39   09   IIA   A-1   Cs   !!!OA has rb (*2)
 
 
 
