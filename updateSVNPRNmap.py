@@ -137,7 +137,8 @@ def formSwapsByDay(filename):
 # After that, program assumes this is because we got to the end of the files,
 # so it finishes. Also, stops once it gets to todays date!
 # When it gets to todays date, it writes a line to the file even if there weren't
-# any swaps. This is just to save time next time!
+# any swaps (writes last successful OA download.
+# This is just to save time next time!
   import os
   import datetime
 
@@ -166,6 +167,9 @@ def formSwapsByDay(filename):
   
   # Get todays  date (no point looking after this!)
   today = datetime.datetime.now().date()
+
+  #start with a blank list:  
+  last_OA_day=[]
   
   #Keep going until we have not found 25 OA files in a row
   while skipped_days<25:
@@ -178,10 +182,9 @@ def formSwapsByDay(filename):
     the_date = datetime.date(year, 1, 1)+datetime.timedelta(days=(day-1))
     if(the_date > today):
       print("Reached todays date! Finished fetching OAs")
-      if(today.year != prev_year or day-1 != prev_day):
-        ofile.write(str(today.year)+" "+str(today.month)+" "+str(today.day)+" "+str(day-1)+" ")
-        for clk in prev_clk_list:
-          ofile.write(clk+" ")
+      if(len(last_OA_day)>10): #i.e., if it holds actual line
+        for i in last_OA_day:
+          ofile.write(str(i)+" ")
         ofile.write("\n")
       break
     
@@ -189,6 +192,10 @@ def formSwapsByDay(filename):
     
     # Fetch and parse the OA file (func defined above)
     day_OA_line=fetchDaysOA(year,day)
+    
+    #Store last successful OA download:
+    if(len(day_OA_line)>10):
+      last_OA_day=day_OA_line
     
     # count the number of "missed days" in a row
     if day_OA_line == "nodata":
@@ -207,6 +214,8 @@ def formSwapsByDay(filename):
         ofile.write(str(i)+" ")
       ofile.write("\n")
       prev_clk_list=current_clk_list
+      prev_year = day_OA_line[0]
+      prev_day = day_OA_line[3]
   #END while
     
   ofile.close()
