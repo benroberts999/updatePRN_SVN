@@ -518,9 +518,70 @@ def generatePrnGpsDm(prn_gps, oa_map):
   return prn_gps_gpsdm
 ################################################################################
 
+################################################################################
+def writePrnGpsGpsdm(prn_gps_gpsdm, out_filename):
+  import datetime
+  from operator import itemgetter
+    
+  ofile = open(out_filename, "w")
+  
+  #Used to convert from 'days since 1/1/70' to date
+  jan_1_1970 = datetime.date(1970, 1, 1)
+
+  # Sorts the list (by SVN, then by date)
+  prn_gps_gpsdm=sorted(prn_gps_gpsdm, key=itemgetter(2,0))
+
+  # Get todays  date, write to file.
+  today = datetime.datetime.now().date()
+  ofile.write(str(today)+"\n")
+
+  #Write some header stuff to file
+  header ="! Our updated PRN_GPS file.\n"
+  header+="! Combines JPL PRN_GPS file (that has accurate PRN-SVN mapptings)\n"
+  header+="! with the US-NavCen Operational Advisories (OAs)\n"
+  header+="! (that contain accurate PRN-Clock mappings.\n"
+  header+="! Comment lines start with '!'\n"
+  header+="! Last fetched: "+str(today)+"\n!\n"
+  header+="! init. date   fin. date  SVN  PRN  BLK  ORB  CLK    Note\n"
+  ofile.write(header)
+  
+  #Format the output data (make look nice) and write to file
+  for line in prn_gps_gpsdm:
+    date_i = "  "+str(jan_1_1970+datetime.timedelta(days=line[0]))+"  "
+    if(line[1]==99999):
+      date_f="0000      "+"   "
+    else:
+      date_f = str(jan_1_1970+datetime.timedelta(days=line[1]))+"   "
+    if line[2]<10 :
+      svn = " "+str(line[2])+"   "
+    else:
+      svn = str(line[2])+"   "
+    if(line[3]<10):
+      prn=" "+str(line[3])+"  "
+    else:
+      prn=str(line[3])+"  "
+    if(line[4]=="I"):
+      block = "I  "+"  "
+    elif(line[4]=="II"):
+      block = "II "+"  "
+    else:
+      block = line[4]+"  "
+    orbit = "orb"+"  "  #Don't need orbits, but file format needs to match
+    clock = line[6]+"  "
+    outline = date_i + date_f + svn + prn + block + orbit + clock + "\n"
+    ofile.write(outline)
+  ofile.close()
+################################################################################
+
+
+
+
+
+
 
 filename="allClockSwapsByDay.out"
-
+out_filename = "PRN_GPS_GPSDM_test.txt"
+exceptions_fn = "exceptions.in"
 #formSwapsByDay(filename)
 
 prn_gps=getPRNGPS()
@@ -529,79 +590,51 @@ oa_map=getOaPrnList(filename)
 
 prn_gps_gpsdm = generatePrnGpsDm(prn_gps,oa_map)
     
+writePrnGpsGpsdm(prn_gps_gpsdm,out_filename)
 
+
+
+
+
+import os
 import datetime
-from operator import itemgetter
-  
-ofile = open("PRN_GPS_GPSDM_test.txt", "w")
 
+#Reads in the allClockSwapsByDay if it exists.
+if os.path.exists(exceptions_fn):
+  ifile = open(exceptions_fn, "r")
+else:
+  print("bah")
+ #return
+
+# Date formats. Used by next block:
+date_format="%Y-%m-%d"
 jan_1_1970 = datetime.date(1970, 1, 1)
 
-# Sorts the list (by SVN, then by date)
-prn_gps_gpsdm=sorted(prn_gps_gpsdm, key=itemgetter(2,0))
 
-# Get todays  date
-today = datetime.datetime.now().date()
-
-ofile.write(str(today)+"\n")
-
-header ="! Our updated PRN_GPS file.\n"
-header+="! Combines JPL PRN_GPS file (that has accurate PRN-SVN mapptings)\n"
-header+="! with the US-NavCen Operational Advisories (OAs) (that contain accurate PRN-Clock mappings.\n"
-header+="! Comment lines start with '!'\n"
-header+="! Last fetched: "+str(today)+"\n!\n"
-header+="! init. date   fin. date  svn  prn  blk  orb  clk    note\n"
-ofile.write(header)
-
-for line in prn_gps_gpsdm:
-  date_i = "  "+str(jan_1_1970+datetime.timedelta(days=line[0]))+"  "
-  if(line[1]==99999):
-    date_f="0000      "+"   "
-  else:
-    date_f = str(jan_1_1970+datetime.timedelta(days=line[1]))+"   "
-  if line[2]<10 :
-    svn = " "+str(line[2])+"   "
-  else:
-    svn = str(line[2])+"   "
-  if(line[3]<10):
-    prn=" "+str(line[3])+"  "
-  else:
-    prn=str(line[3])+"  "
-  if(line[4]=="I"):
-    block = "I  "+"  "
-  elif(line[4]=="II"):
-    block = "II "+"  "
-  else:
-    block = line[4]+"  "
-  orbit = "orb"+"  "  #Don't need orbits, but file format needs to match
-  clock = line[6]+"  "
-  outline = date_i + date_f + svn + prn + block + orbit + clock + "\n"
-  ofile.write(outline)
-ofile.close()
-
-
-#abc = jan_1_1970+datetime.timedelta(days=day)
-
-
-
-#tod=datetime.datetime.now().date()
-#jan_1_1970 = datetime.date(1970, 1, 1)
-
-#print (tod.year)
-
-#if(jan_1_1970 < tod):
-#  print ('yes')
-#else:
-#  print('no')
-
-
-
-
-
-
-
-
-
+for line in ifile:
+  line_list = [int(e) if e.isdigit() else e for e in line.split()]
+  if line_list[0][0]=="!":
+    continue
+  note = " ".join(line_list[6:])
+  line_list = line_list[:5]
+  line_list.append(note)
+  print (line_list)
+  i_date = [int(e) for e in line_list[0].split("-")]
+  f_date = [int(e) for e in line_list[1].split("-")]
+  print (i_date, f_date)
+  yi=i_date[0]
+  mi=i_date[1]
+  di=i_date[2]
+  yf=f_date[0]
+  mf=f_date[1]
+  df=f_date[2]
+  i_date = datetime.date(yi, mi, di)
+  f_date = datetime.date(yf, mf, df)
+  #convert to days since 1/1/70
+  i_days = i_date - jan_1_1970
+  f_days = f_date - jan_1_1970
+  line_list = [i_days.days] + [f_days.days] + line_list[2:]
+  print(line_list)
 
 
 
