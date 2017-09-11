@@ -581,8 +581,8 @@ def getExceptions(prn_gps_gpsdm, exceptions_fn):
   if os.path.exists(exceptions_fn):
     ifile = open(exceptions_fn, "r")
   else:
-    print("bah")
-   #return
+    print("File: ",exceptions_fn," does not exist!")
+    return prn_gps_gpsdm
 
   # Date formats. Used by next block:
   date_format="%Y-%m-%d"
