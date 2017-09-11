@@ -15,7 +15,7 @@ Uses a few python3 features.
 ### PRNs, SVNs, Clocks, and Operational Advisories
 
 Each operational GPS satellite has a PRN (PseudoRandom Noise code).
-This is a label 1-32 (like a `slot' in the GPS constellation).
+This is a label 1-32 (like a 'slot' in the GPS constellation).
 On any given day, only one satellite has each PRN, however, the PRN assigned
 to any specific satellite may change several times over the life of the 
 satellite.
@@ -31,7 +31,7 @@ we are looking at, and what type of clock it is using.
 
 JPL supplies a file, PRN_GPS, that maps each PRN to the SVN for a given day.
 Available:
-ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz
+ * ftp://sideshow.jpl.nasa.gov/pub/gipsy_products/gipsy_params/PRN_GPS.gz
 
 This file also ostensibly states which clock (Rb or Cs) was in use that day.
 The PRN-SVN mappings are accurate, however, the clock mappings are known to be
@@ -39,7 +39,7 @@ largely wrong.
 
 The US Navigation Center makes available so-called operational advisory
 (GPS OPSADVISORIES) files: 
-https://www.navcen.uscg.gov/?Do=gpsArchives
+ * https://www.navcen.uscg.gov/?Do=gpsArchives
 
 There is one such file for every single day.
 These files state which clock was being used by each PRN on that day, but do
@@ -53,11 +53,12 @@ PRN-SVN-Clock mappings. It outputs this list in a new file, called
 PRN_GPS_GPSDM.txt, that is in roughly the same format as the original PRN_GPS 
 file.
 New file is ordered by SVN (then date), has format:
-  initialDate finalDate SVN PRN Block Orbit Clock !notes
+ *  initialDate finalDate SVN PRN Block Orbit Clock !notes
+
 nb: 'orbit' never used. program just prints 'orb' (but must be same format as
 original PRN_GPS file).
 
-There is also an optional input file, `exceptions.in' where we may list any
+There is also an optional input file, 'exceptions.in' where we may list any
 additional clock assignments that we believe are incorrect in the OAs.
 The program will over-ride the OA assignments with those from 'exceptions.in'.
 This file uses same format as above.
@@ -66,12 +67,12 @@ This file uses same format as above.
 ### Rough description of method
 
 Downloads all the OA (operational advisory) files from:
-https://www.navcen.uscg.gov/?Do=gpsArchives
+ * https://www.navcen.uscg.gov/?Do=gpsArchives
 
 There is one OA file for each day.
 
 Download path (DD=day of year (1-366); YYYY=year):
-https://www.navcen.uscg.gov/?Do=getAdvisory&advisory=DD&year=YYYY
+ * https://www.navcen.uscg.gov/?Do=getAdvisory&advisory=DD&year=YYYY
 
 Forms an output file, named allClockSwapsByDay.out, that contains one line
 for each day that a clock assignment was swapped.
