@@ -1,16 +1,36 @@
-# Update PRN_GPS file to map PRN to SVN & Clock
+# Update GPS satellite and station clock assignments
 
+Two programs. Uses a few python3 features.
+
+**updateSVNPRN.py**:
 
 Uses the JPL/NASA PRN_GPS file and the USNavCen operational advisories to 
-create a new file, PRN_GPS_GPSDM.txt, 
+create a new file, **PRN_GPS_GPSDM.txt**, 
 that contains the full correct PRN-SVN-Clock mappings. 
 This file is in roughly the same format as the original PRN_GPS file.
 Also takes in an optional 'exceptions.in' file, where we can manually add clock
 assignments that will over-ride those from PRN_GPS and OA.
+When the end-date is '0000', means clock assignment is current.
 
-Uses a few python3 features.
+Format is:
+ * start-date end-date SVN PRN BLK ORB CLK Note
+
+**igsStationLogs.py**
+
+Uses the IGS station logs, from ftp://ftp.igs.org/pub/station/log/, 
+to creat a `PRN_GPS'-like file that stores which station was using what kind
+of clock on what days.
+Output file is called: **STA_CLOCK_GPSDM.txt**.
+When the end-date is 'c', means clock assignment is current.
+
+Format is:
+ * Name Standard Clock start-date end-date ! Notes
 
 ********************************************************************************
+
+## Update PRN_GPS file to map PRN to SVN & Clock
+
+**updateSVNPRN.py**
 
 ### PRNs, SVNs, Clocks, and Operational Advisories
 
