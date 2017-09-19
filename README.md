@@ -15,6 +15,9 @@ When the end-date is '0000', means clock assignment is current.
 Format is:
  * start-date end-date SVN PRN BLK ORB CLK Note
 
+Detailed instructions below.
+
+
 **igsStationLogs.py**
 
 Uses the IGS station logs, from ftp://ftp.igs.org/pub/station/log/, 
